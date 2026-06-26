@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OkCupid Analysis — Data Analyst Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f19;
+    --surface: #131a2b;
+    --surface2: #1a2236;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8edf5;
+    --muted: #8b9bb4;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --amber: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #0b0f19 100%);
+    padding: 3.5rem 2rem 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner { max-width: 1400px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    background: rgba(99,102,241,0.2);
+    border: 1px solid rgba(99,102,241,0.4);
+    color: #a5b4fc;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #a5b4fc, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.6rem;
+    line-height: 1.2;
+  }
+  .hero-sub { color: var(--muted); font-size: 1.1rem; max-width: 680px; }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+  .hero-meta strong { color: var(--text); }
+  nav {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 2rem;
+    background: rgba(19,26,43,0.95);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  nav a:hover {
+    color: var(--text);
+    background: var(--surface2);
+    border-color: var(--border);
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 2.5rem 2rem; }
+  .prose-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .prose-card h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+  }
+  .prose-card p { color: #c5cfe0; margin-bottom: 0.85rem; }
+  .prose-card p:last-child { margin-bottom: 0; }
+  .prose-card ul { color: #c5cfe0; padding-left: 1.25rem; }
+  .prose-card li { margin-bottom: 0.4rem; }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+  .method-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  .method-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .method-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    color: #c5cfe0;
+  }
+  .method-table tr:hover td { background: rgba(99,102,241,0.05); }
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99,102,241,0.4);
+  }
+  .kpi-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    border-left: 3px solid var(--accent);
+  }
+  .insight-card.amber { border-left-color: var(--amber); }
+  .insight-card.green { border-left-color: var(--green); }
+  .insight-card.purple { border-left-color: var(--accent2); }
+  .insight-num {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.35rem;
+  }
+  .insight-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  .insight-text { color: var(--muted); font-size: 0.875rem; line-height: 1.55; }
+  .section { margin-bottom: 3rem; }
+  .section h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .section-intro {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+    max-width: 720px;
+  }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    gap: 1.25rem;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(99,102,241,0.15);
+  }
+  .chart-title {
+    padding: 1rem 1.25rem 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .chart-card img {
+    width: 100%;
+    display: block;
+    background: #fafafa;
+  }
+  .rec-list {
+    list-style: none;
+    counter-reset: rec;
+  }
+  .rec-list li {
+    counter-increment: rec;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem 1.25rem 3.5rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+    color: #c5cfe0;
+    font-size: 0.925rem;
+  }
+  .rec-list li::before {
+    content: counter(rec);
+    position: absolute;
+    left: 1.25rem;
+    top: 1.25rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+  }
+  .rec-list li strong { color: var(--text); }
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: #a5b4fc;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+  .iframe-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .iframe-card h3 {
+    padding: 1rem 1.25rem 0.5rem;
+    font-size: 0.95rem;
+  }
+  .iframe-card iframe {
+    width: 100%;
+    height: 420px;
+    border: none;
+    background: white;
+  }
+  footer {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  footer strong { color: var(--text); }
+  @media (max-width: 600px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.75rem; }
+  }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="badge">Data Analyst Portfolio Case Study</div>
+      <h1>OkCupid Profile Analysis</h1>
+      <p class="hero-sub">End-to-end analytics project — from raw profile data to segmentation, predictive modeling, and stakeholder-ready insights.</p>
+      <div class="hero-meta">
+        <span><strong>59,946</strong> profiles analyzed</span>
+        <span><strong>14</strong> visualizations</span>
+        <span><strong>53%</strong> from San Francisco</span>
+        <span>Python · pandas · scikit-learn · Altair</span>
+      </div>
+    </div>
+  </header>
+
+  <nav><a href="#overview">Overview</a><a href="#business-problem">Problem</a><a href="#methodology">Methodology</a><a href="#findings">Findings</a><a href="#data-quality">Data Quality</a><a href="#demographics">Demographics</a><a href="#education">Education</a><a href="#behavior">Behavior</a><a href="#clustering">Clustering</a><a href="#predictive-analytics">Predictive Analytics</a><a href="#recommendations">Recommendations</a><a href="#tech-stack">Tech Stack</a><a href="#interactive">Interactive</a></nav>
+
+  <div class="container">
+
+    <!-- Overview -->
+    <section id="overview" class="prose-card">
+      <h2>Executive Summary</h2>
+      <p>I analyzed a dataset of <strong>59,946 OkCupid user profiles</strong> to understand demographic patterns, behavioral trends, and predictive signals in user attributes. The goal was to move from raw data to actionable insights using a structured analytics workflow.</p>
+      <p>I built a complete pipeline covering data cleaning, exploratory analysis, K-Means segmentation, and machine learning — then delivered results through this interactive dashboard designed for non-technical stakeholders.</p>
+      <p><strong>Key outcomes:</strong> mapped geographic concentration in the Bay Area, identified education as the strongest lifestyle predictor, segmented users into 3 clusters, and rigorously evaluated a drinks-classification model against a majority-class baseline — surfacing that profile attributes carry only limited predictive signal (an honest negative result, not a vanity metric).</p>
+    </section>
+
+    <!-- Business Problem -->
+    <div class="two-col" id="business-problem">
+      <div class="prose-card">
+        <h2>Business Problem</h2>
+        <p>Dating platforms rely on understanding user demographics and behavior to improve matching, personalization, and product strategy. Without structured analysis, decisions are often based on assumptions rather than evidence.</p>
+        <p><strong>Core question:</strong> How can we extract meaningful patterns from profile data to understand who users are, how they behave, and which attributes are most predictive?</p>
+      </div>
+      <div class="prose-card">
+        <h2>Success Criteria</h2>
+        <ul>
+          <li>Clean, analysis-ready dataset from raw CSV</li>
+          <li>Clear visual insights organized by business theme</li>
+          <li>Quantified model performance with comparison</li>
+          <li>Actionable recommendations backed by data</li>
+          <li>Stakeholder-friendly delivery (this dashboard)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Methodology -->
+    <section id="methodology" class="prose-card">
+      <h2>Methodology</h2>
+      <p>I followed a standard data analytics lifecycle — each phase maps to a section of this dashboard.</p>
+      <table class="method-table">
+        <thead>
+          <tr><th>Phase</th><th>What I Did</th><th>Tools</th><th>Dashboard Section</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Data Cleaning</td><td>Dropped text columns, handled missing values, standardized empty strings</td><td>pandas, numpy</td><td>—</td></tr>
+          <tr><td>Data Quality</td><td>Missing-value audit across all profile fields</td><td>pandas</td><td>Data Quality</td></tr>
+          <tr><td>EDA</td><td>Demographics, geography, education, lifestyle cross-tabs</td><td>seaborn, matplotlib</td><td>Demographics, Education, Behavior</td></tr>
+          <tr><td>Segmentation</td><td>K-Means (age + height), Elbow Method, feature scaling</td><td>scikit-learn</td><td>Clustering</td></tr>
+          <tr><td>Modeling</td><td>Random Forest (class-balanced) vs. majority-class baseline; evaluated on accuracy, balanced accuracy & macro-F1</td><td>scikit-learn</td><td>Predictive Analytics</td></tr>
+          <tr><td>Delivery</td><td>Auto-generated HTML dashboard with KPIs and navigation</td><td>HTML/CSS, Altair</td><td>This page</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="kpi">
+            <div class="kpi-label">Profiles</div>
+            <div class="kpi-value">59,946</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Median Age</div>
+            <div class="kpi-value">30</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">SF Users</div>
+            <div class="kpi-value">53%</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Single</div>
+            <div class="kpi-value">93%</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Model Macro-F1</div>
+            <div class="kpi-value">0.20</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Clusters</div>
+            <div class="kpi-value">3</div>
+        </div></div>
+
+    <!-- Key Findings -->
+    <section id="findings">
+      <h2 style="font-size:1.35rem;font-weight:600;margin-bottom:1.25rem;padding-bottom:0.6rem;border-bottom:2px solid var(--accent);display:inline-block;">Key Findings</h2>
+      <div class="insight-grid">
+        <div class="insight-card green">
+          <div class="insight-num">53%</div>
+          <div class="insight-title">Bay Area Concentration</div>
+          <div class="insight-text">Over half of all profiles are from San Francisco. The dataset is hyper-local — geographic targeting should reflect this.</div>
+        </div>
+        <div class="insight-card amber">
+          <div class="insight-num">93%</div>
+          <div class="insight-title">Single Users Dominate</div>
+          <div class="insight-text">93% report "single" status. Median age is 30 — a young, dating-active audience.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-num">0.20</div>
+          <div class="insight-title">Honest Model Evaluation</div>
+          <div class="insight-text">A naive baseline already scores 73% accuracy by always guessing "socially". The balanced Random Forest reaches 22% balanced accuracy (macro-F1 0.20) — proof that profile features hold only weak signal for drinking habits. Accuracy alone would have hidden this.</div>
+        </div>
+        <div class="insight-card purple">
+          <div class="insight-num">3 Segments</div>
+          <div class="insight-title">Age × Height Clusters</div>
+          <div class="insight-text">K-Means on age and height revealed 3 distinct user segments — useful for matching and personalization strategies.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    
+        <section id="data-quality" class="section">
+            <h2>Data Quality</h2>
+            <p class="section-intro">How complete is the data? Missing-value rates across key profile fields.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Missing Values Audit</div>
+                <img src="plots/01_missing_data.png" alt="Missing Values Audit" loading="lazy">
+            </div></div>
+        </section>
+        <section id="demographics" class="section">
+            <h2>Demographics</h2>
+            <p class="section-intro">Who are the users? Age, sex, relationship status, and geographic concentration.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Sex & Age Distribution</div>
+                <img src="plots/02_demographics.png" alt="Sex & Age Distribution" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Relationship Status</div>
+                <img src="plots/03_relationship_status.png" alt="Relationship Status" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Top 10 Cities</div>
+                <img src="plots/04_top_locations.png" alt="Top 10 Cities" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Age × Height Correlation</div>
+                <img src="plots/05_correlation.png" alt="Age × Height Correlation" loading="lazy">
+            </div></div>
+        </section>
+        <section id="education" class="section">
+            <h2>Education</h2>
+            <p class="section-intro">Education levels and how they relate to lifestyle choices.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Education Distribution</div>
+                <img src="plots/06_education.png" alt="Education Distribution" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Education vs Drinking Habits</div>
+                <img src="plots/07_education_drinks.png" alt="Education vs Drinking Habits" loading="lazy">
+            </div></div>
+        </section>
+        <section id="behavior" class="section">
+            <h2>Behavior</h2>
+            <p class="section-intro">Lifestyle patterns — alcohol, smoking, and body-type distributions.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Drinks × Smoking Heatmap</div>
+                <img src="plots/08_drinks_smokes.png" alt="Drinks × Smoking Heatmap" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Lifestyle Distributions</div>
+                <img src="plots/09_lifestyle_distribution.png" alt="Lifestyle Distributions" loading="lazy">
+            </div></div>
+        </section>
+        <section id="clustering" class="section">
+            <h2>Clustering</h2>
+            <p class="section-intro">User segmentation via K-Means on age and height.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Elbow Method</div>
+                <img src="plots/11_kmeans_elbow.png" alt="Elbow Method" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Age × Height Segments</div>
+                <img src="plots/12_kmeans_clusters.png" alt="Age × Height Segments" loading="lazy">
+            </div></div>
+        </section>
+        <section id="predictive-analytics" class="section">
+            <h2>Predictive Analytics</h2>
+            <p class="section-intro">Random Forest predicting drinking habits — evaluated honestly against a majority-class baseline, because raw accuracy is misleading on imbalanced data.</p>
+            <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Feature Importance</div>
+                <img src="plots/13_feature_importance.png" alt="Feature Importance" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Model vs Baseline</div>
+                <img src="plots/15_model_vs_baseline.png" alt="Model vs Baseline" loading="lazy">
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Confusion Matrix</div>
+                <img src="plots/14_confusion_matrix.png" alt="Confusion Matrix" loading="lazy">
+            </div></div>
+        </section>
+
+    <!-- Recommendations -->
+    <section id="recommendations" class="prose-card">
+      <h2>Recommendations</h2>
+      <ol class="rec-list">
+        <li><strong>Fix data collection gaps</strong> — offspring (59% missing), diet (41%), religion (34%) are largely empty. Prioritize required fields or smart defaults.</li>
+        <li><strong>Leverage geographic concentration</strong> — 53% of users are in SF. Hyper-local features (neighborhood, commute) could improve matching quality.</li>
+        <li><strong>Don't over-trust the lifestyle model</strong> — among available features education and age rank highest, but overall predictive signal is weak (macro-F1 0.20). Profile attributes alone are not enough to infer drinking habits; richer behavioral data would be needed before productizing this.</li>
+        <li><strong>Apply cluster-based matching</strong> — the 3 age×height segments can drive differentiated matching algorithms or marketing campaigns.</li>
+        <li><strong>Drop income from analysis</strong> — 81% of users hide income (-1). This field adds noise, not signal. Focus on behavior and education instead.</li>
+      </ol>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="tech-stack" class="prose-card">
+      <h2>Tech Stack</h2>
+      <p>This project was built entirely in Python. The dashboard auto-generates on every pipeline run — no manual updates required.</p>
+      <div class="tag-row">
+        <span class="tag">Python 3.12</span>
+        <span class="tag">pandas</span>
+        <span class="tag">numpy</span>
+        <span class="tag">seaborn</span>
+        <span class="tag">matplotlib</span>
+        <span class="tag">scikit-learn</span>
+        <span class="tag">Altair</span>
+        <span class="tag">HTML / CSS</span>
+      </div>
+    </section>
+
+    <!-- Interactive -->
+    <section id="interactive" class="section">
+      <h2>Interactive Exploration</h2>
+      <p class="section-intro">Hover over cells to explore the relationship between relationship status, sexual orientation, and location.</p>
+      <div class="iframe-card">
+        <h3>Status × Orientation Heatmap</h3>
+        <iframe src="plots/10_status_orientation.html"></iframe>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <strong>OkCupid Profile Analysis</strong> — Data Analyst Portfolio Case Study<br>
+    Built with Python · Auto-generated by work.py · 59,946 profiles · 14 charts
+  </footer>
+</body>
+</html>

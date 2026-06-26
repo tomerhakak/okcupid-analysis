@@ -1,0 +1,16 @@
+# Dataset — 131 MB, exceeds GitHub's 100 MB limit. Download separately (see README).
+okcupid_profiles.csv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
