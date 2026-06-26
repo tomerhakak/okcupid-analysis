@@ -103,6 +103,7 @@ def build_dashboard(
         sections.setdefault(chart["section"], []).append(chart)
 
     section_intros = {
+        "User Engagement": "The core business question — who is most engaged (by last-online recency) and what distinguishes them. Profile completeness emerges as a clear, actionable lever.",
         "Data Quality": "How complete is the data? Missing-value rates across key profile fields.",
         "Demographics": "Who are the users? Age, sex, relationship status, and geographic concentration.",
         "Education": "Education levels and how they relate to lifestyle choices.",
@@ -112,6 +113,7 @@ def build_dashboard(
     }
 
     chart_sections = [
+        "User Engagement",
         "Data Quality", "Demographics", "Education",
         "Behavior", "Clustering", "Predictive Analytics",
     ]
@@ -169,6 +171,8 @@ def build_dashboard(
     baseline_acc = report["baseline_acc"]
     balanced_acc = report["balanced_acc"]
     macro_f1 = report["macro_f1"]
+    active_pct = report["active_pct"]
+    completeness_lift = report["completeness_lift"]
     chart_count = len(DASHBOARD_CHARTS)
 
     html = f"""<!DOCTYPE html>
@@ -514,7 +518,7 @@ def build_dashboard(
     <section id="overview" class="prose-card">
       <h2>Executive Summary</h2>
       <p>I analyzed a dataset of <strong>{profiles} OkCupid user profiles</strong> to understand demographic patterns, behavioral trends, and predictive signals in user attributes. The goal was to move from raw data to actionable insights using a structured analytics workflow.</p>
-      <p>I built a complete pipeline covering data cleaning, exploratory analysis, K-Means segmentation, and machine learning — then delivered results through this interactive dashboard designed for non-technical stakeholders.</p>
+      <p>I built a complete pipeline covering data cleaning, exploratory analysis, K-Means segmentation, and machine learning — then delivered results through this interactive dashboard designed for non-technical stakeholders. The analysis is anchored by one focused business question: <strong>who are the most engaged users, and what distinguishes them?</strong></p>
       <p><strong>Key outcomes:</strong> mapped geographic concentration in the Bay Area, identified education as the strongest lifestyle predictor, segmented users into {clusters} clusters, and rigorously evaluated a drinks-classification model against a majority-class baseline — surfacing that profile attributes carry only limited predictive signal (an honest negative result, not a vanity metric).</p>
     </section>
 
@@ -523,7 +527,7 @@ def build_dashboard(
       <div class="prose-card">
         <h2>Business Problem</h2>
         <p>Dating platforms rely on understanding user demographics and behavior to improve matching, personalization, and product strategy. Without structured analysis, decisions are often based on assumptions rather than evidence.</p>
-        <p><strong>Core question:</strong> How can we extract meaningful patterns from profile data to understand who users are, how they behave, and which attributes are most predictive?</p>
+        <p><strong>Core question:</strong> Who are the most engaged users on the platform, and what distinguishes them — so product and growth teams can act on it? Supporting questions cover who the users are, how they behave, and which attributes are most predictive.</p>
       </div>
       <div class="prose-card">
         <h2>Success Criteria</h2>
@@ -564,6 +568,11 @@ def build_dashboard(
       <h2 style="font-size:1.35rem;font-weight:600;margin-bottom:1.25rem;padding-bottom:0.6rem;border-bottom:2px solid var(--accent);display:inline-block;">Key Findings</h2>
       <div class="insight-grid">
         <div class="insight-card green">
+          <div class="insight-num">+{completeness_lift:.0f} pts</div>
+          <div class="insight-title">Completeness Drives Engagement</div>
+          <div class="insight-text">Users with the most complete profiles are <strong>{completeness_lift:.0f} percentage points</strong> more likely to be active (online in the last 30 days) than those with the least complete profiles. {active_pct:.0f}% of users are active overall. Nudging profile completion is a direct, low-cost engagement lever.</div>
+        </div>
+        <div class="insight-card">
           <div class="insight-num">{sf_pct:.0f}%</div>
           <div class="insight-title">Bay Area Concentration</div>
           <div class="insight-text">Over half of all profiles are from San Francisco. The dataset is hyper-local — geographic targeting should reflect this.</div>
@@ -593,6 +602,7 @@ def build_dashboard(
     <section id="recommendations" class="prose-card">
       <h2>Recommendations</h2>
       <ol class="rec-list">
+        <li><strong>Nudge profile completion to lift engagement</strong> — the most complete profiles are +{completeness_lift:.0f} pts more likely to be active. Add progress bars, completion prompts, and onboarding nudges; this is the highest-leverage finding in the analysis.</li>
         <li><strong>Fix data collection gaps</strong> — offspring (59% missing), diet (41%), religion (34%) are largely empty. Prioritize required fields or smart defaults.</li>
         <li><strong>Leverage geographic concentration</strong> — {sf_pct:.0f}% of users are in SF. Hyper-local features (neighborhood, commute) could improve matching quality.</li>
         <li><strong>Don't over-trust the lifestyle model</strong> — among available features education and age rank highest, but overall predictive signal is weak (macro-F1 {macro_f1:.2f}). Profile attributes alone are not enough to infer drinking habits; richer behavioral data would be needed before productizing this.</li>
@@ -637,6 +647,8 @@ def build_dashboard(
 </html>"""
 
     DASHBOARD_PATH.write_text(html, encoding="utf-8")
+    # Also write index.html so GitHub Pages serves the dashboard as the landing page.
+    (BASE_DIR / "index.html").write_text(html, encoding="utf-8")
     return DASHBOARD_PATH
 
 
@@ -990,6 +1002,76 @@ plt.tight_layout()
 save_fig("14_confusion_matrix", "Confusion Matrix", "Predictive Analytics")
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 8. Business Question — User Engagement
+# ══════════════════════════════════════════════════════════════════════════════
+# Focused question: "Who are the most engaged users, and what distinguishes them?"
+# Engagement is derived from `last_online` recency (relative to the dataset's most
+# recent timestamp) and related to how complete each profile is — an actionable
+# signal product & growth teams can move on.
+section("8. Business Question — User Engagement")
+
+# Profile completeness = share of non-empty fields per user (essays already dropped).
+PROFILE_FIELDS = list(df.columns)
+df["completeness"] = df[PROFILE_FIELDS].notna().mean(axis=1) * 100
+
+# Recency from last_online (format: YYYY-MM-DD-HH-MM), measured against the latest
+# timestamp in the data (this is a 2012 snapshot, so we anchor to its max date).
+df["last_online_dt"] = pd.to_datetime(df["last_online"], format="%Y-%m-%d-%H-%M", errors="coerce")
+ref_date = df["last_online_dt"].max()
+df["days_since_online"] = (ref_date - df["last_online_dt"]).dt.days
+
+eng = df.dropna(subset=["days_since_online"]).copy()
+
+
+def engagement_bucket(days: float) -> str:
+    if days <= 7:
+        return "Active (≤7d)"
+    if days <= 30:
+        return "Recent (8–30d)"
+    return "Dormant (>30d)"
+
+
+eng["engagement"] = eng["days_since_online"].apply(engagement_bucket)
+ENG_ORDER = ["Active (≤7d)", "Recent (8–30d)", "Dormant (>30d)"]
+eng_counts = eng["engagement"].value_counts().reindex(ENG_ORDER)
+active_pct = (eng["days_since_online"] <= 30).mean() * 100
+
+fig, ax = plt.subplots(figsize=(9, 5))
+bars = ax.bar(eng_counts.index, eng_counts.values,
+              color=["#10b981", "#6366f1", "#94a3b8"], edgecolor="white")
+ax.bar_label(bars, fmt="%d", padding=3, fontsize=10)
+ax.set_title("User Engagement Mix — by last-online recency", pad=12)
+ax.set_ylabel("Users")
+sns.despine(ax=ax)
+plt.tight_layout()
+save_fig("16_engagement_mix", "Engagement Mix", "User Engagement")
+
+# Does a more complete profile mean a more engaged user?
+# Rank-based quartiles avoid duplicate-edge errors (completeness is coarsely valued).
+eng["completeness_q"] = pd.qcut(
+    eng["completeness"].rank(method="first"), 4,
+    labels=["Q1\n(least complete)", "Q2", "Q3", "Q4\n(most complete)"],
+)
+eng["active30"] = eng["days_since_online"] <= 30
+rate_by_q = eng.groupby("completeness_q", observed=True)["active30"].mean() * 100
+completeness_lift = rate_by_q.iloc[-1] - rate_by_q.iloc[0]
+
+fig, ax = plt.subplots(figsize=(9, 5))
+bars = ax.bar(rate_by_q.index.astype(str), rate_by_q.values,
+              color=sns.color_palette("crest", len(rate_by_q)), edgecolor="white")
+ax.bar_label(bars, fmt="%.0f%%", padding=3, fontsize=10)
+ax.set_title("Active-User Rate by Profile Completeness", pad=12)
+ax.set_ylabel("% active in last 30 days")
+ax.set_xlabel("Profile completeness quartile")
+sns.despine(ax=ax)
+plt.tight_layout()
+save_fig("17_engagement_by_completeness", "Engagement vs Profile Completeness", "User Engagement")
+
+print(f"  Active in last 30 days:                 {active_pct:.1f}%")
+print(f"  Active-rate lift, Q4 vs Q1 completeness: +{completeness_lift:.1f} pts")
+
+
 # ── Summary & Dashboard ──────────────────────────────────────────────────────
 section("Summary")
 print(f"""
@@ -1007,6 +1089,7 @@ male_pct = sex_counts.get("m", 0) / sex_counts.sum() * 100
 dashboard_stats = {
     "Profiles": f"{df.shape[0]:,}",
     "Median Age": f"{median_age:.0f}",
+    "Active ≤30d": f"{active_pct:.0f}%",
     "SF Users": f"{sf_pct:.0f}%",
     "Single": f"{single_pct:.0f}%",
     "Model Macro-F1": f"{drinks_macro_f1:.2f}",
@@ -1024,6 +1107,8 @@ report = {
     "baseline_acc": baseline_accuracy,
     "balanced_acc": drinks_balanced_acc,
     "macro_f1": drinks_macro_f1,
+    "active_pct": active_pct,
+    "completeness_lift": completeness_lift,
 }
 
 section("Building Dashboard")

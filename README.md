@@ -8,15 +8,29 @@ automatically by a single Python script.
 > Built as a portfolio piece to demonstrate the full data-analytics lifecycle:
 > cleaning → EDA → segmentation → modeling → communication.
 
+**🔗 Live dashboard:** https://tomerhakak.github.io/okcupid-analysis/
+**📓 Narrated notebook:** [`okcupid_analysis.ipynb`](okcupid_analysis.ipynb) — the full thought process, with outputs rendered.
+
+---
+
+## ❓ The business question
+
+> **Who are the most engaged users on the platform, and what distinguishes them?**
+
+**Answer:** users with the most complete profiles are **~13 percentage points more
+likely to be active** (online in the last 30 days) than those with the least complete
+profiles. Encouraging profile completion is therefore a direct, low-cost lever for
+engagement — the single most actionable finding in this analysis.
+
 ---
 
 ## 📊 Dashboard preview
 
-Running the pipeline produces a self-contained `dashboard.html` with an executive
-summary, methodology, KPIs, 15 visualizations, and business recommendations.
+Running the pipeline produces a self-contained `dashboard.html` (also written as
+`index.html` for GitHub Pages) with an executive summary, methodology, KPIs,
+17 visualizations, and business recommendations.
 
-Open [`dashboard.html`](dashboard.html) in a browser after running the script
-(or view the committed copy directly).
+View it live at the link above, or open [`dashboard.html`](dashboard.html) locally.
 
 ---
 
@@ -24,6 +38,7 @@ Open [`dashboard.html`](dashboard.html) in a browser after running the script
 
 | Finding | Detail |
 |---|---|
+| **Completeness drives engagement** | The most complete profiles are ~13 pts more likely to be active than the least complete — the key actionable lever (~75% of users active in last 30 days). |
 | **Hyper-local audience** | Over half of all profiles are from San Francisco — the dataset is geographically concentrated in the Bay Area. |
 | **Young & single** | Median age ~30; the large majority report "single" status. |
 | **Data quality gaps** | `offspring` (~59% missing), `diet` (~41%), and `religion` (~34%) are sparsely filled; `income` is undisclosed (`-1`) by ~81% of users. |
@@ -55,9 +70,11 @@ only "73% accuracy" would have hidden this entirely.
 
 ```
 okcupid-analysis/
-├── work.py            # The full pipeline (cleaning → EDA → ML → dashboard)
-├── dashboard.html     # Auto-generated portfolio dashboard
-├── plots/             # Generated charts (PNG) + interactive Altair chart (HTML)
+├── work.py                  # The full pipeline (cleaning → EDA → ML → dashboard)
+├── okcupid_analysis.ipynb   # Narrated notebook with rendered outputs
+├── dashboard.html           # Auto-generated portfolio dashboard
+├── index.html               # Same dashboard, served by GitHub Pages
+├── plots/                   # Generated charts (PNG) + interactive Altair chart (HTML)
 ├── requirements.txt
 └── README.md
 ```
@@ -82,8 +99,13 @@ GitHub's 100 MB file limit. See below to obtain it.
    ```bash
    python work.py
    ```
-   This regenerates everything in `plots/`, rebuilds `dashboard.html`, and opens
-   it in your browser.
+   This regenerates everything in `plots/`, rebuilds `dashboard.html` / `index.html`,
+   and opens the dashboard in your browser.
+
+4. **Or explore the notebook** for the narrated walkthrough:
+   ```bash
+   jupyter notebook okcupid_analysis.ipynb
+   ```
 
 ---
 
