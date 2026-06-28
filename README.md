@@ -8,8 +8,11 @@ automatically by a single Python script.
 > Built as a portfolio piece to demonstrate the full data-analytics lifecycle:
 > cleaning → EDA → segmentation → modeling → communication.
 
-**🔗 Live dashboard:** https://tomerhakak.github.io/okcupid-analysis/
-**📓 Narrated notebook:** [`okcupid_analysis.ipynb`](okcupid_analysis.ipynb) — the full thought process, with outputs rendered.
+**🔗 Live dashboard:** https://tomerhakak.github.io/okcupid-analysis/ &nbsp;·&nbsp; **📓 Narrated notebook:** [`okcupid_analysis.ipynb`](okcupid_analysis.ipynb)
+
+[![OkCupid Analysis — interactive dashboard preview](assets/dashboard-preview.png)](https://tomerhakak.github.io/okcupid-analysis/)
+
+<p align="center"><em>👆 Click the preview to open the live interactive dashboard.</em></p>
 
 ---
 
@@ -123,3 +126,15 @@ GitHub's 100 MB file limit. See below to obtain it.
 - **Unsupervised learning** — K-Means segmentation with the Elbow Method and feature scaling.
 - **Supervised learning done honestly** — baseline comparison, class balancing, and the right metrics for imbalanced data.
 - **Communication** — an auto-generated, stakeholder-friendly dashboard, not just a notebook.
+
+---
+
+## 👤 About
+
+Built by **Tomer Hakak** as a data-analyst portfolio project.
+
+- 📧 Email: [tomerhakak15@gmail.com](mailto:tomerhakak15@gmail.com)
+- 💻 GitHub: [@tomerhakak](https://github.com/tomerhakak)
+
+> Dataset: [OkCupid Profiles (Kaggle)](https://www.kaggle.com/datasets/andrewmvd/okcupid-profiles).
+> Used here for educational, non-commercial portfolio purposes. Released under the MIT License — see [`LICENSE`](LICENSE).
